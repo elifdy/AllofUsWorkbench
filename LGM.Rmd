@@ -1,0 +1,272 @@
+---
+title: "Latent Growth Modeling"
+author: "EDY"
+date: "11/15/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Linear Growth Model
+```{r}
+
+plot_obs <- ggplot(data=mhealth_df, 
+                   aes(x = Time, y = depression, group = id)) +       
+                   geom_line() +                                        
+                   theme_bw() +                                         
+                   scale_x_continuous(breaks = 1:6, name = "Time") +   
+                   scale_y_continuous(name = "Mental Health")      
+
+#print the object (plot)
+print(plot_obs)
+
+# ex1: intercept-only growth model
+
+icept <- lme(fixed = depression ~ 1 , random = ~ 1 |id, data = mhealth_df)
+summary(icept)
+
+# ex2: linear growth model
+
+linear <- lme(fixed = depression ~ Time, random = ~ Time|id, data = mhealth_df)
+summary(linear)
+
+
+# ex3: quadratic growth model
+
+quad <- lme(fixed = depression ~ Time + I(Time^2), random = ~ Time|id, data = mhealth_df)
+summary(quad)
+
+```
+
+# No growth models
+## No growth model using lme function.
+```{r}
+
+#fitting no growth model and assigning it to an object
+depression.ng.lme <- lme(depression ~ 1, random= ~1 |id, data = mhealth_df, method="ML")
+
+#obtaining summary of the model using the object we just created
+summary(depression.ng.lme)
+print(depression.ng.lme)
+fixed.effects(depression.ng.lme)
+```
+
+
+## No growth model using "nlme" function.
+```{r}
+
+#fitting no growth model and assigning it to an object
+depression.ng.nlme <- nlme(depression ~ beta_1 + d_1i,
+                     data=mhealth_df,
+                     fixed=beta_1~1,
+                     random=d_1i~1,
+                     group=~id,
+                     start=c(beta_1=45),
+                     na.action = "na.exclude")
+
+#obtaining summary of the model using the object we just created
+summary(depression.ng.nlme)
+```
+
+## No growth model using alternative specification in 'nlme'function.
+```{r}
+
+#fitting no growth model and assigning it to an object
+depression.ng.nlme <- nlme(depression~b_1i,
+                     data=mhealth_df,
+                     fixed=b_1i~1,
+                     random=b_1i~1|id,
+                     start=c(b_1i=40),
+                     na.action = "na.exclude")
+
+#obtaining summary of the model using the object we just created
+summary(depression.ng.nlme)
+
+#No growth model using 'lme4' package,'lmer' function.
+#fitting no growth model and assigning it to an object
+depression.ng.lmer <- lmer(depression ~ 1 + (1 | id),
+                     data = mhealth_df,
+                     REML = FALSE,
+                     na.action = "na.exclude")
+
+#obtaining summary of the model using the object we just created
+summary(depression.ng.lmer)
+```
+
+## No growth model using 'lavaan' package.
+
+```{r}
+names(mhealth_df)
+
+# names of variables in data
+#c("id","momed","Anx","Treatment","depression","Time")
+mhealth_df_wide <- reshape(data=mhealth_df,
+                          timevar=c("Time"),
+                          idvar=c("id"),
+                          v.names=c("depression","Anx","Treatment"),
+                          direction="wide", sep="_")
+#view the first few observations in the data set
+head(mhealth_df_wide)
+```
+
+## no growth model as a lavaan model
+```{r}
+# no growth model in full SEM way
+depression.ng.lavaan_model <- '
+  # latent variable definitions
+      #intercept
+      eta_1 =~ 1*depression_1
+      eta_1 =~ 1*depression_2
+      eta_1 =~ 1*depression_4
+      eta_1 =~ 1*depression_6
+      
+
+  # factor variances
+      eta_1 ~~ eta_1
+
+  # covariances among factors
+      #none (only 1 factor)
+
+  # factor means
+      eta_1 ~ start(30)*1
+
+  # manifest variances (made equivalent by naming theta)
+      depression_1 ~~ theta*depression_1
+      depression_2 ~~ theta*depression_2
+      depression_4 ~~ theta*depression_4
+      depression_6 ~~ theta*depression_6
+     
+  # manifest means (fixed at zero)
+      depression_1 ~ 0*1
+      depression_2 ~ 0*1
+      depression_4 ~ 0*1
+      depression_6 ~ 0*1
+      
+' 
+
+#estimating the model using sem() function
+depression.ng.lavaan_fit <- sem(depression.ng.lavaan_model,
+                          data = mhealth_df_wide,
+                          meanstructure = TRUE,
+                          estimator = "ML",
+                          missing = "fiml")
+
+summary(depression.ng.lavaan_fit)
+
+fitMeasures(depression.ng.lavaan_fit)
+
+#Other summaries
+parameterEstimates(depression.ng.lavaan_fit)
+#inspect(depression.ng.lavaan_fit, what="est")
+```
+
+# Linear growth model using lme function.
+```{r}
+
+#fitting linear growth model and assigning it to an object
+lg.depression.lme <- lme(depression ~ Time, random= ~ Time |id, data = mhealth_df, method="ML")
+
+#obtaining summary of the model using the object we just created
+summary(lg.depression.lme)
+
+#Linear growth model using nlme function.
+#fitting linear growth model and assigning it to an object
+lg.depression.nlme <- nlme(depression~(beta_1+d_1i)+(beta_2+d_2i)*(Time),
+                   data=mhealth_df,
+                   fixed=beta_1+beta_2~1,
+                   random=d_1i+d_2i~1,
+                   group=~id,
+                   start=c(beta_1=35,beta_2=4),
+                   na.action = "na.exclude")
+
+#obtaining summary of the model using the object we just created
+summary (lg.depression.nlme)
+```
+#Linear growth model using alternative specification in nlme function.
+```{r}
+
+#fitting linear growth model and assigning it to an object
+lg.depression.nlme <- nlme(depression~b_1i+b_2i*(Time),
+                     data=mhealth_df,
+                     fixed=b_1i+b_2i~1,
+                     random=b_1i+b_2i~1|id,
+                     start=c(b_1i=35, b_2i=4))
+
+#obtaining summary of the model using the object we just created
+summary(lg.depression.nlme)
+
+#Linear growth model using lme4 package.
+#fitting linear growth model and assigning it to an object
+lg.depression.lmer <- lmer(depression ~ 1 + Time + (1 + Time | id), data = mhealth_df, REML = FALSE)
+
+#obtaining summary of the model using the object we just created
+summary(lg.depression.lmer)
+```
+
+## Linear growth model using lavaan package.
+```{r}
+
+#linear growth model
+lg.depression.lavaan_model <- '
+  # latent variable definitions
+      #intercept (note intercept is a reserved term)
+      eta_1 =~ 1*depression_1
+      eta_1 =~ 1*depression_2
+      eta_1 =~ 1*depression_4
+      eta_1 =~ 1*depression_6
+      
+
+      #linear slope (note intercept is a reserved term)
+      eta_2 =~ 0*depression_1
+      eta_2 =~ 1*depression_2
+      eta_2 =~ 3*depression_4
+      eta_2 =~ 5*depression_6
+      
+
+  # factor variances
+      eta_1 ~~ eta_1
+      eta_2 ~~ eta_2
+
+  # covariances among factors
+      eta_1 ~~ eta_2
+
+  # factor means
+      eta_1 ~ start(35)*1
+      eta_2 ~ start(4)*1
+
+  # manifest variances (made equivalent by naming theta)
+      depression_1 ~~ theta*depression_1
+      depression_2 ~~ theta*depression_2
+      depression_4 ~~ theta*depression_4
+      depression_6 ~~ theta*depression_6
+     
+  # manifest means (fixed at zero)
+      depression_1 ~ 0*1
+      depression_2 ~ 0*1
+      depression_4 ~ 0*1
+      depression_6 ~ 0*1
+      
+' 
+
+
+#estimating the model using sem() function
+lg.depression.lavaan_fit <- sem(lg.depression.lavaan_model,
+                          data = mhealth_df_wide,
+                          meanstructure = TRUE,
+                          estimator = "ML",
+                          missing = "fiml")
+
+summary(lg.depression.lavaan_fit)
+```
+
+
+```{r}
+fitMeasures(lg.depression.lavaan_fit)
+
+#Other summaries
+parameterEstimates(depression.ng.lavaan_fit)
+#inspect(depression.ng.lavaan_fit, what="est")
+```

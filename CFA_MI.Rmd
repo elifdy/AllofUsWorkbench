@@ -1,0 +1,545 @@
+---
+title: "Multigroup Measurement Invariance"
+author: "Elif Dede Yildirim"
+date: "11/14/2022"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+bothsamples <- readRDS("H:/bothsamples.Rds")
+```
+
+```{r , include=FALSE}
+library(car)
+## Loading required package: carData
+bothsamples$age <- recode(bothsamples$age, "-9=NA")
+bothsamples$gender <- recode(bothsamples$gender, "-9=NA")
+bothsamples$skill <- recode(bothsamples$skill, "-9=NA")
+bothsamples$relax <- recode(bothsamples$relax, "-9=NA")
+bothsamples$believe <- recode(bothsamples$believe, "-9=NA")
+bothsamples$enjoy <- recode(bothsamples$enjoy, "-9=NA")
+bothsamples$easy <- recode(bothsamples$easy, "-9=NA")
+bothsamples$best <- recode(bothsamples$best, "-9=NA")
+bothsamples$fun <- recode(bothsamples$fun, "-9=NA")
+library(lavaan)
+
+```
+
+This R code sets up a multi-group confirmatory factor analysis (CFA) using the lavaan package. It defines the factor structure and relationships for two groups of data, and then estimates the model parameters and provides a summary of the results. The original models can be found in Bujacz et al. (2014) paper.  http://www.frontiersin.org/journal/10.3389/fpsyg.2014.00984/ 
+
+
+
+# Measurement Invariance 
+
+## Configural Invariance 
+
+```{r}
+# ; can be used to separate lines
+# Define a multi-group CFA model
+Configuralscale <- '
+group: 1
+
+#factor loadings for group 1
+comfort =~ lambda11*relax +lambda12*easy
+pleasure =~ lambda13*fun + lambda14*plea
+content =~ lambda15*skill + lambda16*believe + lambda17*ideal + lambda18*best
+
+#intercepts for group 1
+relax~nu11*1; easy~nu12*1; fun~nu13*1; plea~nu14*1
+skill~nu15*1; believe~nu16*1; ideal~nu17*1; best~nu18*1
+
+#residual variances for group 1
+relax~~theta11*relax; easy~~theta12*easy; fun~~theta13*fun; plea~~theta14*plea;
+skill~~theta15*skill; believe~~theta16*believe; ideal~~theta17*ideal; best~~theta18*best
+
+#factor means for group 1
+comfort~0*1; pleasure~0*1; content~0*1
+
+#factor variances for group 1
+comfort~~1*comfort; pleasure~~1*pleasure; content~~1*content
+
+#factor covariances for group 1
+comfort~~psi11*pleasure; comfort~~psi12*content; pleasure~~psi13*content
+
+group: 2
+#factor loadings for group 2
+comfort =~ lambda21*relax +lambda22*easy
+pleasure =~ lambda23*fun + lambda24*plea
+content =~ lambda25*skill + lambda26*believe + lambda27*ideal + lambda28*best
+
+#intercepts for group 2
+relax~nu21*1; easy~nu22*1; fun~nu23*1; plea~nu24*1
+skill~nu25*1; believe~nu26*1; ideal~nu27*1; best~nu28*1
+
+#residual variances for group 2
+relax~~theta21*relax; easy~~theta22*easy; fun~~theta23*fun; plea~~theta24*plea;
+skill~~theta25*skill; believe~~theta26*believe; ideal~~theta27*ideal; best~~theta28*best
+
+#factor means for group 2
+comfort~0*1; pleasure~0*1; content~0*1
+
+#factor variances for group 2
+comfort~~1*comfort; pleasure~~1*pleasure; content~~1*content
+
+#factor covariances for group 2
+comfort~~psi21*pleasure; comfort~~psi22*content; pleasure~~psi23*content
+'
+# Estimate the CFA model parameters 
+Configuralscale.est <- lavaan(Configuralscale, data=bothsamples, group= "lang", missing="ML", auto.fix.first=FALSE)
+
+# Display a summary of the estimated model, including fit measures, standardized parameter estimates, and R-squared values
+summary(Configuralscale.est, fit.measures=TRUE, standardized=TRUE, rsq=T)
+
+
+```
+
+
+## Metric Invariance
+```{r}
+
+Metricscale <- '
+group: 1
+#factor loadings for group 1
+comfort =~ lambda11*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 1
+relax ~ nu11*1
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu14*1
+skill~ nu15*1
+believe~ nu16*1
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 1
+relax ~~ theta11*relax
+easy~~ theta12*easy
+fun~~ theta13*fun
+plea~~theta14*plea
+skill~~  theta15*skill
+believe~~ theta16*believe
+ideal~~  theta17*ideal
+best~~  theta18*best
+
+#factor means for group 1
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 1
+comfort ~~1*comfort
+pleasure~~1*pleasure
+content ~~1*content
+
+#factor covariances for group 1
+comfort ~~psi11*pleasure
+comfort ~~psi12*content
+pleasure~~psi13*content
+
+group: 2
+#factor loadings for group 2
+comfort =~ lambda11*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 2
+relax ~ nu21*1
+easy~ nu22*1
+fun~ nu23*1
+plea~ nu24*1
+skill~ nu25*1
+believe~ nu26*1
+ideal~ nu27*1
+best~ nu28*1
+
+#residual variances for group 2
+relax ~~ theta21*relax
+easy~~ theta22*easy
+fun~~ theta23*fun
+plea~~theta24*plea
+skill~~  theta25*skill
+believe~~ theta26*believe
+ideal~~  theta27*ideal
+best~~  theta28*best
+
+#factor means for group 2
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 2
+comfort ~~psi1*comfort
+pleasure~~psi2*pleasure
+content ~~psi3*content
+
+#factor covariances for group 2
+comfort ~~psi21*pleasure
+comfort ~~psi22*content
+pleasure~~psi23*content
+'
+
+# Estimate the CFA model parameters 
+
+Metricscale.est <- lavaan(Metricscale, data=bothsamples, group= "lang", missing="ML", auto.fix.first=FALSE)
+
+# Display a summary of the estimated model, including fit measures, standardized parameter estimates
+summary(Metricscale.est, fit.measures=TRUE, standardized=TRUE)
+
+```
+
+
+## Model comparison
+```{r}
+lavTestLRT(Metricscale.est, Configuralscale.est )
+```
+
+## Partial Metric Invariance
+```{r}
+PMetricscale <- '
+group: 1
+#factor loadings for group 1
+comfort =~ lambda11*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 1
+relax ~ nu11*1
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu14*1
+skill~ nu15*1
+believe~ nu16*1
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 1
+relax ~~ theta11*relax
+easy~~ theta12*easy
+fun~~ theta13*fun
+plea~~theta14*plea
+skill~~  theta15*skill
+believe~~ theta16*believe
+ideal~~  theta17*ideal
+best~~  theta18*best
+
+#factor means for group 1
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 1
+comfort ~~1*comfort
+pleasure~~1*pleasure
+content ~~1*content
+
+#factor covariances for group 1
+comfort ~~psi11*pleasure
+comfort ~~psi12*content
+pleasure~~psi13*content
+
+group: 2
+#factor loadings for group 2
+comfort =~ lambda21*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 2
+relax ~ nu21*1
+easy~ nu22*1
+fun~ nu23*1
+plea~ nu24*1
+skill~ nu25*1
+believe~ nu26*1
+ideal~ nu27*1
+best~ nu28*1
+
+#residual variances for group 2
+relax ~~ theta21*relax
+easy~~ theta22*easy
+fun~~ theta23*fun
+plea~~theta24*plea
+skill~~  theta25*skill
+believe~~ theta26*believe
+ideal~~  theta27*ideal
+best~~  theta28*best
+
+#factor means for group 2
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 2
+comfort ~~psi1*comfort
+pleasure~~psi2*pleasure
+content ~~psi3*content
+
+#factor covariances for group 2
+comfort ~~psi21*pleasure
+comfort ~~psi22*content
+pleasure~~psi23*content
+'
+# Estimate the CFA model parameters 
+PMetricscale.est <- lavaan(PMetricscale, data=bothsamples, group= "lang", missing="ML", auto.fix.first=FALSE)
+
+# Display a summary of the estimated model, including fit measures, standardized parameter estimates, and R-squared values
+summary(PMetricscale.est, fit.measures=TRUE, standardized=TRUE)
+
+```
+
+
+## Model comparison
+```{r}
+lavTestLRT(PMetricscale.est, Configuralscale.est)
+```
+
+
+## Strong Invariance
+```{r}
+
+Strongscale <- '
+group: 1
+#factor loadings for group 1
+comfort =~ lambda11*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 1
+relax ~ nu11*1 
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu14*1
+skill~ nu15*1
+believe~ nu16*1
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 1
+relax ~~ theta11*relax
+easy~~ theta12*easy
+fun~~ theta13*fun
+plea~~theta14*plea
+skill~~  theta15*skill
+believe~~ theta16*believe
+ideal~~  theta17*ideal
+best~~  theta18*best
+
+#factor means for group 1
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 1
+comfort ~~1*comfort
+pleasure~~1*pleasure
+content ~~1*content
+
+#factor covariances for group 1
+comfort ~~psi11*pleasure
+comfort ~~psi12*content
+pleasure~~psi13*content
+
+group: 2
+#factor loadings for group 2
+comfort =~ lambda21*relax #free
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 2
+relax ~ nu21*1 #free
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu14*1
+skill~ nu15*1
+believe~ nu16*1
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 2
+relax ~~ theta21*relax
+easy~~ theta22*easy
+fun~~ theta23*fun
+plea~~theta24*plea
+skill~~  theta25*skill
+believe~~ theta26*believe
+ideal~~  theta27*ideal
+best~~  theta28*best
+
+#factor means for group 2
+comfort ~alpha1*1
+pleasure~alpha2*1
+content ~alpha3*1
+
+#factor variances for group 2
+comfort ~~psi1*comfort
+pleasure~~psi2*pleasure
+content ~~psi3*content
+
+#factor covariances for group 2
+comfort ~~psi21*pleasure
+comfort ~~psi22*content
+pleasure~~psi23*content
+'
+# Estimate the CFA model parameters 
+Strongscale.est<- lavaan(Strongscale, data=bothsamples, group= "lang", missing="ML", auto.fix.first=FALSE)
+
+# Display a summary of the estimated model, including fit measures, standardized parameter estimates, and R-squared values
+summary(Strongscale.est, fit.measures=TRUE, standardized=TRUE)
+
+```
+
+## Model comparison
+```{r}
+lavTestLRT(Strongscale.est, PMetricscale.est)
+```
+
+
+
+## Partial Strong Invariance
+```{r}
+
+PStrongscale <- '
+group: 1
+#factor loadings for group 1
+comfort =~ lambda11*relax
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 1
+relax ~ nu11*1
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu14*1
+skill~ nu15*1
+believe~ nu16*1
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 1
+relax ~~ theta11*relax
+easy~~ theta12*easy
+fun~~ theta13*fun
+plea~~theta14*plea
+skill~~  theta15*skill
+believe~~ theta16*believe
+ideal~~  theta17*ideal
+best~~  theta18*best
+
+#factor means for group 1
+comfort ~0*1
+pleasure~0*1
+content ~0*1
+
+#factor variances for group 1
+comfort ~~1*comfort
+pleasure~~1*pleasure
+content ~~1*content
+
+#factor covariances for group 1
+comfort ~~psi11*pleasure 
+comfort ~~psi12*content
+pleasure~~psi13*content
+
+group: 2
+#factor loadings for group 2
+comfort =~ lambda21*relax #free
+comfort =~ lambda12*easy
+pleasure =~ lambda13*fun
+pleasure =~ lambda14*plea
+content =~ lambda15*skill
+content =~ lambda16*believe
+content =~ lambda17*ideal
+content =~ lambda18*best
+
+#intercepts for group 2
+relax ~ nu21*1 #free
+easy~ nu12*1
+fun~ nu13*1
+plea~ nu24*1 #free
+skill~ nu25*1 #free
+believe~ nu26*1 #free
+ideal~ nu17*1
+best~ nu18*1
+
+#residual variances for group 2
+relax ~~ theta21*relax
+easy~~ theta22*easy
+fun~~ theta23*fun
+plea~~theta24*plea
+skill~~  theta25*skill
+believe~~ theta26*believe
+ideal~~  theta27*ideal
+best~~  theta28*best
+
+#factor means for group 2
+comfort ~alpha1*1
+pleasure~alpha2*1
+content ~alpha3*1
+
+#factor variances for group 2
+comfort ~~psi1*comfort
+pleasure~~psi2*pleasure
+content ~~psi3*content
+
+#factor covariances for group 2
+comfort ~~psi21*pleasure
+comfort ~~psi22*content
+pleasure~~psi23*content
+'
+
+# Estimate the CFA model parameters 
+PStrongscale.est<- lavaan(PStrongscale, data=bothsamples, group= "lang", missing="ML", auto.fix.first=FALSE)
+
+# Display a summary of the estimated model, including fit measures, standardized parameter estimates, and R-squared values
+summary(PStrongscale.est, fit.measures=TRUE, standardized=TRUE)
+
+```
+
+## Model comparison
+```{r}
+lavTestLRT(PStrongscale.est,PMetricscale.est)
+```
+

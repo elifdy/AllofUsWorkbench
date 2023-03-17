@@ -1,0 +1,54 @@
+---
+title: "Correlations"
+author: "EDY"
+date: "12/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+# Load data
+data <- read.csv("path/to/data.csv")
+# "path/to/data.csv" should be replaced with the actual path of data 
+```
+```{r}
+# Calculate correlation matrix
+cor_matrix <- cor(data)
+```
+```{r}
+# Print correlation matrix
+print(cor_matrix)
+```
+```{r}
+# Visualize correlation matrix
+library(corrplot)
+corrplot(cor_matrix, type="upper", method="circle", tl.col="black")
+```
+
+Example
+```{r}
+library(lavaan)
+# Demo.twolevel dataset from the lavaan package
+head(Demo.twolevel)
+```
+```{r}
+#select variables 
+demo <- Demo.twolevel[, 1:11]
+```
+
+
+```{r}
+# Calculate correlation matrix
+cor_matrix <- cor(demo)
+```
+```{r}
+# Print correlation matrix
+print(cor_matrix)
+```
+```{r}
+# Visualize correlation matrix
+
+corrplot(cor_matrix, type="upper", method="circle", tl.col="black")
+```

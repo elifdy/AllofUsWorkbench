@@ -1,0 +1,51 @@
+---
+title: "Data wrangling"
+author: "EDY"
+date: "12/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load tidyr package
+library(tidyr)
+```
+
+```{r}
+
+# Convert long data to wide format
+wide_data <- pivot_wider(data, id_cols=person_id, names_from=question_concept_id, values_from=answer_concept_id)
+```
+```{r}
+# Print wide data frame
+print(wide_data)
+
+```
+
+
+# Example
+```{r}
+#  data frame
+data_df <- data.frame(person_id=c(10081,10081,10082,10082,10083,10083,10084,10084), question_concept_id=c(400211,400212,400211,400212,400211,400212,400211,400212), answer_concept_id=c(400141,400141,400152,400161,400152,400161,400152,400141))
+
+```
+
+```{r}
+# Print original data frame
+print(data_df)
+
+```
+
+```{r}
+
+# Convert long data to wide format
+wide_data_df <- pivot_wider(data_df, id_cols=person_id, names_from=question_concept_id, values_from=answer_concept_id)
+```
+```{r}
+# Print wide data frame
+print(wide_data_df)
+
+```

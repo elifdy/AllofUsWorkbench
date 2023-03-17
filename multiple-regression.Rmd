@@ -1,0 +1,56 @@
+---
+title: "Multiple Regression"
+author: "EDY"
+date: "12/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+# Load data
+data <- read.csv("path/to/data.csv")
+```
+
+
+```{r}
+# Fit linear regression model
+model <- lm(y ~ x1 + x2, data=data)
+```
+
+
+```{r}
+# Print summary of model
+summary(model)
+```
+
+
+```{r}
+# Plot the data and the regression line
+plot(model)
+
+```
+
+
+```{r}
+library(lavaan)
+# Demo.growth dataset from the lavaan package
+head(Demo.growth)
+```
+```{r}
+# Fit linear regression model
+model.a <- lm(t2 ~  x1+ x2 + c1+ t1, data=Demo.growth)
+```
+
+
+```{r}
+# Print summary of model
+summary(model.a)
+```
+
+```{r}
+# Plot the data and the regression line
+plot(model.a)
+
+```
